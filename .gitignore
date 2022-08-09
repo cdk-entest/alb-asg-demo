@@ -1,6 +1,7 @@
 *.js
 !jest.config.js
 *.d.ts
+package-lock.json
 jest.config.js
 tsconfig.json 
 .npmignore
