@@ -5,6 +5,7 @@ import {
   aws_autoscaling,
   aws_elasticloadbalancingv2,
   aws_iam,
+  Duration,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { Effect } from "aws-cdk-lib/aws-iam";
@@ -153,6 +154,14 @@ export class ApplicationStack extends Stack {
     listener.addTargets("Target", {
       port: 80,
       targets: [asg],
+      healthCheck: {
+        path: "/",
+        port: "80",
+        protocol: aws_elasticloadbalancingv2.Protocol.HTTP,
+        healthyThresholdCount: 5,
+        unhealthyThresholdCount: 2,
+        timeout: Duration.seconds(10),
+      },
     });
   }
 }
