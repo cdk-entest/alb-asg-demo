@@ -1,6 +1,10 @@
 *.js
 !jest.config.js
 *.d.ts
+jest.config.js
+tsconfig.json 
+.npmignore
+test
 node_modules
 
 # CDK asset staging directory

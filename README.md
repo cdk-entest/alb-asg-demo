@@ -1,1 +1,0 @@
-## Application Load Balander and Auto Scaling Group  
