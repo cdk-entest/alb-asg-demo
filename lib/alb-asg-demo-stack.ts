@@ -60,14 +60,6 @@ export class ApplicationStack extends Stack {
       assumedBy: new aws_iam.ServicePrincipal("ec2.amazonaws.com"),
     });
 
-    role.addToPolicy(
-      new aws_iam.PolicyStatement({
-        effect: Effect.ALLOW,
-        actions: ["s3:*"],
-        resources: ["*"],
-      })
-    );
-
     role.addManagedPolicy(
       aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
         "AmazonSSMManagedInstanceCore"
@@ -140,7 +132,7 @@ export class ApplicationStack extends Stack {
         minCapacity: 2,
         maxCapacity: 2,
         vpcSubnets: {
-          subnets: vpc.publicSubnets,
+          subnets: vpc.privateSubnets,
         },
         role: role,
         securityGroup: asgSecurityGroup,

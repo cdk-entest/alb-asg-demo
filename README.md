@@ -1,3 +1,12 @@
+---
+title: Application Load Balancer and Auto Scaling Group
+description: a simple alb and asg web application
+author: haimtran
+publishedDate: 09/06/2022
+date: 2022-08-09
+---
+
+
 ## Application Load Balander and Auto Scaling Group
 
 - Create a VPC 
@@ -5,6 +14,7 @@
 - Create an autoscaling group (asg) 2-2-2
 - Add userData to run a web 
 - Terminate an EC2 and see (asg) launch a new EC2
+- [GitHub](https://github.com/entest-hai/alb-asg-demo)
 
 ![aws_devops-Expriment drawio(5)](https://user-images.githubusercontent.com/20411077/183557265-71d701b8-810c-4c4d-ab34-7f95f2007d61.png)
 
@@ -121,7 +131,7 @@ auto scaling group
         minCapacity: 2,
         maxCapacity: 2,
         vpcSubnets: {
-          subnets: vpc.publicSubnets,
+          subnets: vpc.privateSubnets,
         },
         role: role,
         securityGroup: asgSecurityGroup,
