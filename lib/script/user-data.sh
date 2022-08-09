@@ -5,4 +5,4 @@ unzip main.zip
 cd alb-sg-demo-main
 cd web
 python3 -m pip install -r requirements.txt
-python3 -m app.py
+python3 -m app
