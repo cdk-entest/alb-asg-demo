@@ -6,6 +6,9 @@
 - Add userData to run a web 
 - Terminate an EC2 and see (asg) launch a new EC2
 
+![aws_devops-Expriment drawio(5)](https://user-images.githubusercontent.com/20411077/183557265-71d701b8-810c-4c4d-ab34-7f95f2007d61.png)
+
+
 ## VPC Stack 
 ```tsx
 export class VpcStack extends Stack {
