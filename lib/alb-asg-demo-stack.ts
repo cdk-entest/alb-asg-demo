@@ -166,15 +166,15 @@ export class ApplicationStack extends Stack {
       metric: metric,
       scalingSteps: [
         {
-          upper: 10,
+          upper: 1,
           change: -1,
         },
         {
-          lower: 50,
+          lower: 10,
           change: +1,
         },
         {
-          lower: 70,
+          lower: 60,
           change: +3,
         },
       ],
