@@ -168,15 +168,50 @@ an implicit target group created
 
 target tracking - on cpu usage 
 ```tsx
-
+asg.scaleOnCpuUtilization("KeepSparseCPU", {
+  targetUtilizationPercent: 50,
+});
 ```
 
 target tracking - on number of request per instance 
-```tsx 
-
+```tsx
+asg.scaleOnRequestCount("AvgReqeustPerInstance", {
+  targetRequestsPerMinute: 1000,
+});
 ```
 
-step scale 
+step scale - based on custom metric 
 ```tsx 
+const metric = new aws_cloudwatch.Metric({
+      metricName: "CPUUtilization",
+      namespace: "AWS/EC2",
+      statistic: "Average",
+      period: Duration.minutes(1),
+      dimensionsMap: {
+        AutoScalingGroupName: asg.autoScalingGroupName,
+      },
+    });
+```
 
+scale on custom metric with custom step  
+```tsx 
+asg.scaleOnMetric("MyMetric", {
+  metric: metric,
+  scalingSteps: [
+    {
+      upper: 1,
+      change: -1,
+    },
+    {
+      lower: 10,
+      change: +1,
+    },
+    {
+      lower: 60,
+      change: +3,
+    },
+  ],
+  adjustmentType:
+    aws_autoscaling.AdjustmentType.CHANGE_IN_CAPACITY,
+});
 ```
