@@ -157,8 +157,7 @@ export class ApplicationStack extends Stack {
       statistic: "Average",
       period: Duration.minutes(1),
       dimensionsMap: {
-        name: "AutoScalingGroupName",
-        value: asg.autoScalingGroupName,
+        AutoScalingGroupName: asg.autoScalingGroupName,
       },
     });
 

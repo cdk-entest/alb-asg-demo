@@ -1,26 +1,21 @@
----
-title: Application Load Balancer and Auto Scaling Group
-description: a simple alb and asg web application
-author: haimtran
-publishedDate: 09/06/2022
-date: 2022-08-09
----
+import {
+  Stack,
+  StackProps,
+  aws_ec2,
+  aws_autoscaling,
+  aws_elasticloadbalancingv2,
+  aws_iam,
+  Duration,
+  aws_cloudwatch,
+} from "aws-cdk-lib";
+import { Construct } from "constructs";
+import { Effect } from "aws-cdk-lib/aws-iam";
+import * as fs from "fs";
 
+interface VpcProps extends StackProps {
+  cidr: string;
+}
 
-## Application Load Balander and Auto Scaling Group
-
-- Create a VPC 
-- Create a application load balancer 
-- Create an autoscaling group (asg) 2-2-2
-- Add userData to run a web 
-- Terminate an EC2 and see (asg) launch a new EC2
-- [GitHub](https://github.com/entest-hai/alb-asg-demo)
-
-![aws_devops-Expriment drawio(5)](https://user-images.githubusercontent.com/20411077/183557265-71d701b8-810c-4c4d-ab34-7f95f2007d61.png)
-
-
-## VPC Stack 
-```tsx
 export class VpcStack extends Stack {
   public readonly vpc: aws_ec2.Vpc;
 
@@ -50,12 +45,29 @@ export class VpcStack extends Stack {
     });
   }
 }
-```
 
-## Application Load Balancer 
-security group for alb 
- ```tsx
- const albSecurityGroup = new aws_ec2.SecurityGroup(
+interface ApplicationProps extends StackProps {
+  vpc: aws_ec2.Vpc;
+}
+
+export class ApplicationStack extends Stack {
+  constructor(scope: Construct, id: string, props: ApplicationProps) {
+    super(scope, id, props);
+
+    const vpc = props.vpc;
+
+    const role = new aws_iam.Role(this, "RoleForWebServer", {
+      roleName: "RoleForWebServer",
+      assumedBy: new aws_iam.ServicePrincipal("ec2.amazonaws.com"),
+    });
+
+    role.addManagedPolicy(
+      aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
+        "AmazonSSMManagedInstanceCore"
+      )
+    );
+
+    const albSecurityGroup = new aws_ec2.SecurityGroup(
       this,
       "SGForWeb",
       {
@@ -69,10 +81,8 @@ security group for alb
       aws_ec2.Port.tcp(80),
       "Allow port 80 web"
     );
- ```
- application load balancer 
- ```tsx
- const alb =
+
+    const alb =
       new aws_elasticloadbalancingv2.ApplicationLoadBalancer(
         this,
         "AlbWebDemo",
@@ -87,18 +97,12 @@ security group for alb
           securityGroup: albSecurityGroup,
         }
       );
- ```
-add listener port 80
-```tsx
- const listener = alb.addListener("AlbListener", {
+
+    const listener = alb.addListener("AlbListener", {
       port: 80,
     });
-```
 
-## Auto Scaling Group 
-security group for auto scaling group 
-```tsx
- const asgSecurityGroup = new aws_ec2.SecurityGroup(
+    const asgSecurityGroup = new aws_ec2.SecurityGroup(
       this,
       "SGForASG",
       {
@@ -111,10 +115,8 @@ security group for auto scaling group
       aws_ec2.Peer.securityGroupId(albSecurityGroup.securityGroupId),
       aws_ec2.Port.tcp(80)
     );
-```
-auto scaling group 
-```tsx
- const asg = new aws_autoscaling.AutoScalingGroup(
+
+    const asg = new aws_autoscaling.AutoScalingGroup(
       this,
       "AsgDemo",
       {
@@ -129,7 +131,7 @@ auto scaling group
           edition: aws_ec2.AmazonLinuxEdition.STANDARD,
         }),
         minCapacity: 2,
-        maxCapacity: 2,
+        maxCapacity: 10,
         vpcSubnets: {
           subnets: vpc.privateSubnets,
         },
@@ -137,17 +139,52 @@ auto scaling group
         securityGroup: asgSecurityGroup,
       }
     );
-```
-asg user data - download and run webserver 
-```tsx
- asg.addUserData(
+
+    // target tracking - cpu usage
+    // asg.scaleOnCpuUtilization("KeepSparseCPU", {
+    //   targetUtilizationPercent: 50,
+    // });
+
+    // target tracking - no request per instance
+    // asg.scaleOnRequestCount("AvgReqeustPerInstance", {
+    //   targetRequestsPerMinute: 1000,
+    // });
+
+    // step scaling - custom metric
+    const metric = new aws_cloudwatch.Metric({
+      metricName: "CPUUtilization",
+      namespace: "AWS/EC2",
+      statistic: "Average",
+      period: Duration.minutes(1),
+      dimensionsMap: {
+        name: "AutoScalingGroupName",
+        value: asg.autoScalingGroupName,
+      },
+    });
+
+    asg.scaleOnMetric("MyMetric", {
+      metric: metric,
+      scalingSteps: [
+        {
+          upper: 1,
+          change: -1,
+        },
+        {
+          lower: 10,
+          change: +1,
+        },
+        {
+          lower: 60,
+          change: +3,
+        },
+      ],
+      adjustmentType:
+        aws_autoscaling.AdjustmentType.CHANGE_IN_CAPACITY,
+    });
+
+    asg.addUserData(
       fs.readFileSync("./lib/script/user-data.sh", "utf8")
     );
-```
-
-## Integrate ALB with ASG
-an implicit target group created 
-```tsx
 
     listener.addTargets("Target", {
       port: 80,
@@ -161,22 +198,5 @@ an implicit target group created
         timeout: Duration.seconds(10),
       },
     });
-```
-
-
-## AutoScaling Strategies 
-
-target tracking - on cpu usage 
-```tsx
-
-```
-
-target tracking - on number of request per instance 
-```tsx 
-
-```
-
-step scale 
-```tsx 
-
-```
+  }
+}
