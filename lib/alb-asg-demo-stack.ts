@@ -6,6 +6,7 @@ import {
   aws_elasticloadbalancingv2,
   aws_iam,
   Duration,
+  aws_cloudwatch,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { Effect } from "aws-cdk-lib/aws-iam";
@@ -130,7 +131,7 @@ export class ApplicationStack extends Stack {
           edition: aws_ec2.AmazonLinuxEdition.STANDARD,
         }),
         minCapacity: 2,
-        maxCapacity: 2,
+        maxCapacity: 10,
         vpcSubnets: {
           subnets: vpc.privateSubnets,
         },
@@ -138,6 +139,48 @@ export class ApplicationStack extends Stack {
         securityGroup: asgSecurityGroup,
       }
     );
+
+    // target tracking - cpu usage
+    // asg.scaleOnCpuUtilization("KeepSparseCPU", {
+    //   targetUtilizationPercent: 50,
+    // });
+
+    // target tracking - no request per instance
+    // asg.scaleOnRequestCount("AvgReqeustPerInstance", {
+    //   targetRequestsPerMinute: 1000,
+    // });
+
+    // step scaling - custom metric
+    const metric = new aws_cloudwatch.Metric({
+      metricName: "CPUUtilization",
+      namespace: "AWS/EC2",
+      statistic: "Average",
+      period: Duration.minutes(1),
+      dimensionsMap: {
+        name: "AutoScalingGroupName",
+        value: asg.autoScalingGroupName,
+      },
+    });
+
+    asg.scaleOnMetric("MyMetric", {
+      metric: metric,
+      scalingSteps: [
+        {
+          upper: 10,
+          change: -1,
+        },
+        {
+          lower: 50,
+          change: +1,
+        },
+        {
+          lower: 70,
+          change: +3,
+        },
+      ],
+      adjustmentType:
+        aws_autoscaling.AdjustmentType.CHANGE_IN_CAPACITY,
+    });
 
     asg.addUserData(
       fs.readFileSync("./lib/script/user-data.sh", "utf8")
