@@ -215,3 +215,34 @@ asg.scaleOnMetric("MyMetric", {
     aws_autoscaling.AdjustmentType.CHANGE_IN_CAPACITY,
 });
 ```
+
+## Test 
+Option 1. manually terminal EC2 instances 
+Option 2. send concurrent requests 
+```py
+import time
+import requests
+from concurrent.futures import ThreadPoolExecutor
+
+URL = "http://$ALB_URL"
+NO_CONCUR_REQUEST = 1000
+COUNT = 1
+
+
+def send_request():
+    resp = requests.get(URL)
+    # print(resp)
+
+
+def test_concurrent():
+    with ThreadPoolExecutor(max_workers=NO_CONCUR_REQUEST) as executor:
+        for k in range(1, NO_CONCUR_REQUEST):
+            executor.submit(send_request)
+
+
+while True:
+    print(f"{NO_CONCUR_REQUEST} requests {COUNT}")
+    test_concurrent()
+    time.sleep(1)
+    COUNT += 1
+```
