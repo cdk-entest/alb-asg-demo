@@ -16,8 +16,7 @@ date: 2022-08-09
 - Terminate an EC2 and see (asg) launch a new EC2
 - [GitHub](https://github.com/entest-hai/alb-asg-demo)
 
-![aws_devops-Expriment drawio(5)](https://user-images.githubusercontent.com/20411077/183557265-71d701b8-810c-4c4d-ab34-7f95f2007d61.png)
-
+![architect](https://user-images.githubusercontent.com/20411077/198503168-73a512d1-281d-4f83-84d1-f909198f9f97.png)
 
 ## VPC Stack 
 ```tsx
