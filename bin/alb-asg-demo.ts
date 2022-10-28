@@ -8,7 +8,7 @@ import {
 const app = new cdk.App();
 
 // vpc stack
-const vpc = new VpcStack(app, "AlbAsgDemoStack", {
+const vpc = new VpcStack(app, "VpcStack", {
   cidr: "10.1.0.0/20",
   env: {
     region: "us-east-1",
