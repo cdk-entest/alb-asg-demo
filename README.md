@@ -7,7 +7,7 @@ date: 2022-08-09
 ---
 
 
-## Application Load Balander and Auto Scaling Group
+## Introduction 
 
 - Create a VPC 
 - Create a application load balancer 
@@ -16,7 +16,7 @@ date: 2022-08-09
 - Terminate an EC2 and see (asg) launch a new EC2
 - [GitHub](https://github.com/entest-hai/alb-asg-demo)
 
-![architect](https://user-images.githubusercontent.com/20411077/198505677-6caeb0c2-ffbd-4eb8-aca3-525805c00a6b.png)
+![Untitled Diagram](https://user-images.githubusercontent.com/20411077/198817205-7abad2f5-e2b1-418d-a983-29088e8a71ae.png)
 
 
 ## VPC Stack 
