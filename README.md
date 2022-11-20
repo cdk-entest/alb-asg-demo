@@ -16,7 +16,7 @@ date: 2022-08-09
 - Terminate an EC2 and see (asg) launch a new EC2
 - [GitHub](https://github.com/cdk-entest/alb-asg-demo)
 
-![Untitled Diagram drawio](https://user-images.githubusercontent.com/20411077/202885304-b3a62b76-4f56-4fee-b82f-2e962a451b1e.png)
+![Untitled Diagram drawio](https://user-images.githubusercontent.com/20411077/202885587-6bc6bd59-5a85-49e6-a1ff-808d40665def.png)
 
 
 ## VPC Stack 
