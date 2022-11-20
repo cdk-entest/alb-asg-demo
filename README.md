@@ -14,7 +14,7 @@ date: 2022-08-09
 - Create an autoscaling group (asg) 2-2-2
 - Add userData to run a web 
 - Terminate an EC2 and see (asg) launch a new EC2
-- [GitHub](https://github.com/entest-hai/alb-asg-demo)
+- [GitHub](https://github.com/cdk-entest/alb-asg-demo)
 
 ![Untitled Diagram](https://user-images.githubusercontent.com/20411077/198817205-7abad2f5-e2b1-418d-a983-29088e8a71ae.png)
 
