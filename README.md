@@ -52,6 +52,29 @@ export class VpcStack extends Stack {
 }
 ```
 
+look up for an existed vpc 
+
+```ts 
+interface ImportedVpcProps extends StackProps {
+  vpcId: string;
+  vpcName: string;
+}
+
+export class ImportedVpcStack extends Stack {
+  public readonly vpc: aws_ec2.IVpc;
+
+  constructor(scope: Construct, id: string, props: ImportedVpcProps) {
+    super(scope, id, props);
+
+    this.vpc = aws_ec2.Vpc.fromLookup(this, "LookupExistedVpc", {
+      vpcId: props.vpcId,
+      vpcName: props.vpcName,
+    });
+  }
+}
+
+```
+
 ## Application Load Balancer 
 security group for alb 
  ```tsx
@@ -274,3 +297,6 @@ python3 -m ensurepip --upgrade
 python3 -m pip install -r requirements.txt
 python3 -m app
 ```
+
+## Reference 
+- [cooldown and warmup time](https://docs.aws.amazon.com/autoscaling/ec2/userguide/consolidated-view-of-warm-up-and-cooldown-settings.html)

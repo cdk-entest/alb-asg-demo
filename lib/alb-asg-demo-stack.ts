@@ -19,7 +19,11 @@ interface VpcProps extends StackProps {
 export class VpcStack extends Stack {
   public readonly vpc: aws_ec2.Vpc;
 
-  constructor(scope: Construct, id: string, props: VpcProps) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: VpcProps
+  ) {
     super(scope, id, props);
 
     this.vpc = new aws_ec2.Vpc(this, "VpcAlbDemo", {
@@ -51,15 +55,25 @@ interface ApplicationProps extends StackProps {
 }
 
 export class ApplicationStack extends Stack {
-  constructor(scope: Construct, id: string, props: ApplicationProps) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: ApplicationProps
+  ) {
     super(scope, id, props);
 
     const vpc = props.vpc;
 
-    const role = new aws_iam.Role(this, "RoleForWebServer", {
-      roleName: "RoleForWebServer",
-      assumedBy: new aws_iam.ServicePrincipal("ec2.amazonaws.com"),
-    });
+    const role = new aws_iam.Role(
+      this,
+      "RoleForWebServer",
+      {
+        roleName: "RoleForWebServer",
+        assumedBy: new aws_iam.ServicePrincipal(
+          "ec2.amazonaws.com"
+        ),
+      }
+    );
 
     role.addManagedPolicy(
       aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
@@ -112,7 +126,9 @@ export class ApplicationStack extends Stack {
     );
 
     asgSecurityGroup.addIngressRule(
-      aws_ec2.Peer.securityGroupId(albSecurityGroup.securityGroupId),
+      aws_ec2.Peer.securityGroupId(
+        albSecurityGroup.securityGroupId
+      ),
       aws_ec2.Port.tcp(80)
     );
 
@@ -127,7 +143,8 @@ export class ApplicationStack extends Stack {
           aws_ec2.InstanceSize.SMALL
         ),
         machineImage: new aws_ec2.AmazonLinuxImage({
-          generation: aws_ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
+          generation:
+            aws_ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
           edition: aws_ec2.AmazonLinuxEdition.STANDARD,
         }),
         minCapacity: 2,
