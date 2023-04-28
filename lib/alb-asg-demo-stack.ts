@@ -9,11 +9,28 @@ import {
   aws_cloudwatch,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { Effect } from "aws-cdk-lib/aws-iam";
 import * as fs from "fs";
 
 interface VpcProps extends StackProps {
   cidr: string;
+}
+
+interface ImportedVpcProps extends StackProps {
+  vpcId: string;
+  vpcName: string;
+}
+
+export class ImportedVpcStack extends Stack {
+  public readonly vpc: aws_ec2.IVpc;
+
+  constructor(scope: Construct, id: string, props: ImportedVpcProps) {
+    super(scope, id, props);
+
+    this.vpc = aws_ec2.Vpc.fromLookup(this, "LookupExistedVpc", {
+      vpcId: props.vpcId,
+      vpcName: props.vpcName,
+    });
+  }
 }
 
 export class VpcStack extends Stack {
@@ -47,7 +64,7 @@ export class VpcStack extends Stack {
 }
 
 interface ApplicationProps extends StackProps {
-  vpc: aws_ec2.Vpc;
+  vpc: aws_ec2.IVpc;
 }
 
 export class ApplicationStack extends Stack {
