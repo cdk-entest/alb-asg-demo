@@ -308,7 +308,8 @@ unzip master.zip
 cd flask-tailwind-polly-master
 python3 -m ensurepip --upgrade
 python3 -m pip install -r requirements.txt
-cd app 
+cd app
+export BUCKET_NAME=""
 python3 -m app 
 ```
 
