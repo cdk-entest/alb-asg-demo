@@ -7,4 +7,5 @@ python3 -m ensurepip --upgrade
 python3 -m pip install -r requirements.txt
 cd app
 export BUCKET_NAME=""
+export REGION="ap-southeast-1"
 python3 -m app 
