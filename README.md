@@ -287,7 +287,6 @@ python3 -m app
 
 second user-data 
 
-```bash 
 #!/bin/bash
 cd ~
 wget https://github.com/cdk-entest/eks-cdk-web/archive/refs/heads/master.zip
