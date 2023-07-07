@@ -269,7 +269,7 @@ while True:
     COUNT += 1
 ```
 
-## UserData
+## User Data
 
 user-data-1
 
@@ -286,7 +286,7 @@ python3 -m app
 
 user-data-2
 
-```
+```bash
 #!/bin/bash
 cd ~
 wget https://github.com/cdk-entest/eks-cdk-web/archive/refs/heads/master.zip
