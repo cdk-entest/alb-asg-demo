@@ -17,7 +17,7 @@ date: 2023-07-06
 
 ![Untitled Diagram drawio](https://user-images.githubusercontent.com/20411077/202885587-6bc6bd59-5a85-49e6-a1ff-808d40665def.png)
 
-## VPC Stack
+## Network Stack
 
 ```tsx
 export class VpcStack extends Stack {
@@ -162,7 +162,7 @@ asg user data - download and run webserver
 asg.addUserData(fs.readFileSync("./lib/script/user-data.sh", "utf8"));
 ```
 
-## Integrate ALB with ASG
+## ALB Listener
 
 an implicit target group created
 
@@ -181,7 +181,7 @@ listener.addTargets("Target", {
 });
 ```
 
-## AutoScaling Strategies
+## Scaling Policy
 
 target tracking - on cpu usage
 
