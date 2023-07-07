@@ -8,6 +8,7 @@ import {
   Duration,
   aws_cloudwatch,
 } from "aws-cdk-lib";
+import { Effect } from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 import * as fs from "fs";
 
@@ -36,16 +37,23 @@ export class ImportedVpcStack extends Stack {
 export class VpcStack extends Stack {
   public readonly vpc: aws_ec2.Vpc;
 
-  constructor(
-    scope: Construct,
-    id: string,
-    props: VpcProps
-  ) {
+  constructor(scope: Construct, id: string, props: VpcProps) {
     super(scope, id, props);
 
     this.vpc = new aws_ec2.Vpc(this, "VpcAlbDemo", {
       vpcName: "VpcAlbDemo",
       cidr: props.cidr,
+      // max number of az
+      maxAzs: 2,
+      // enable dns
+      enableDnsHostnames: true,
+      // enable dns
+      enableDnsSupport: true,
+      // aws nat gateway service not instance
+      natGatewayProvider: aws_ec2.NatInstanceProvider.gateway(),
+      // can be less than num az default 1 natgw/zone
+      natGateways: 1,
+      // subnet configuration per zone
       subnetConfiguration: [
         {
           name: "Public",
@@ -72,30 +80,39 @@ interface ApplicationProps extends StackProps {
 }
 
 export class ApplicationStack extends Stack {
-  constructor(
-    scope: Construct,
-    id: string,
-    props: ApplicationProps
-  ) {
+  constructor(scope: Construct, id: string, props: ApplicationProps) {
     super(scope, id, props);
 
     const vpc = props.vpc;
 
-    const role = new aws_iam.Role(
-      this,
-      "RoleForWebServer",
-      {
-        roleName: "RoleForWebServer",
-        assumedBy: new aws_iam.ServicePrincipal(
-          "ec2.amazonaws.com"
-        ),
-      }
-    );
+    const role = new aws_iam.Role(this, "RoleForWebServer", {
+      roleName: "RoleForWebServer",
+      assumedBy: new aws_iam.ServicePrincipal("ec2.amazonaws.com"),
+    });
 
+    // allow ssm connection
     role.addManagedPolicy(
       aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
         "AmazonSSMManagedInstanceCore"
       )
+    );
+
+    // allow read and write s3
+    role.addToPolicy(
+      new aws_iam.PolicyStatement({
+        effect: Effect.ALLOW,
+        resources: ["*"],
+        actions: ["s3:*"],
+      })
+    );
+
+    // allow call poly service
+    role.addToPolicy(
+      new aws_iam.PolicyStatement({
+        effect: Effect.ALLOW,
+        resources: ["*"],
+        actions: ["polly:*"],
+      })
     );
 
     const albSecurityGroup = new aws_ec2.SecurityGroup(
@@ -143,9 +160,7 @@ export class ApplicationStack extends Stack {
     );
 
     asgSecurityGroup.addIngressRule(
-      aws_ec2.Peer.securityGroupId(
-        albSecurityGroup.securityGroupId
-      ),
+      aws_ec2.Peer.securityGroupId(albSecurityGroup.securityGroupId),
       aws_ec2.Port.tcp(80)
     );
 
@@ -160,8 +175,7 @@ export class ApplicationStack extends Stack {
           aws_ec2.InstanceSize.SMALL
         ),
         machineImage: new aws_ec2.AmazonLinuxImage({
-          generation:
-            aws_ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
+          generation: aws_ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
           edition: aws_ec2.AmazonLinuxEdition.STANDARD,
         }),
         minCapacity: 2,
@@ -216,7 +230,7 @@ export class ApplicationStack extends Stack {
     });
 
     asg.addUserData(
-      fs.readFileSync("./lib/script/user-data.sh", "utf8")
+      fs.readFileSync("./lib/script/user-data-3.sh", "utf8")
     );
 
     listener.addTargets("Target", {
@@ -231,5 +245,83 @@ export class ApplicationStack extends Stack {
         timeout: Duration.seconds(10),
       },
     });
+  }
+}
+
+interface WebServerProps extends StackProps {
+  vpc: aws_ec2.Vpc;
+}
+
+export class WebServerStack extends Stack {
+  constructor(scope: Construct, id: string, props: WebServerProps) {
+    super(scope, id, props);
+
+    // security group for webserver
+    const sg = new aws_ec2.SecurityGroup(
+      this,
+      "WebServerPollySecurityGroup",
+      {
+        vpc: props.vpc,
+        securityGroupName: "WebServerPollySecurityGroup",
+      }
+    );
+
+    sg.addIngressRule(aws_ec2.Peer.anyIpv4(), aws_ec2.Port.tcp(80));
+
+    sg.addIngressRule(aws_ec2.Peer.anyIpv4(), aws_ec2.Port.tcp(22));
+
+    // iam role for web server
+    const role = new aws_iam.Role(this, "RoleForWebServerPollyDemo", {
+      roleName: "RoleForWebServerPollyDemo",
+      assumedBy: new aws_iam.ServicePrincipal("ec2.amazonaws.com"),
+    });
+
+    // allow ssm connection
+    role.addManagedPolicy(
+      aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
+        "AmazonSSMManagedInstanceCore"
+      )
+    );
+
+    // allow read and write s3
+    role.addToPolicy(
+      new aws_iam.PolicyStatement({
+        effect: Effect.ALLOW,
+        resources: ["*"],
+        actions: ["s3:*"],
+      })
+    );
+
+    // allow call poly service
+    role.addToPolicy(
+      new aws_iam.PolicyStatement({
+        effect: Effect.ALLOW,
+        resources: ["*"],
+        actions: ["polly:*"],
+      })
+    );
+
+    // ec2 for web server
+    const ec2 = new aws_ec2.Instance(this, "WebServerPollyDemo", {
+      instanceName: "WebServerPollyDemo",
+      role: role,
+      vpc: props.vpc,
+      securityGroup: sg,
+      vpcSubnets: {
+        subnetType: aws_ec2.SubnetType.PUBLIC,
+      },
+      instanceType: aws_ec2.InstanceType.of(
+        aws_ec2.InstanceClass.T2,
+        aws_ec2.InstanceSize.SMALL
+      ),
+      machineImage: new aws_ec2.AmazonLinuxImage({
+        generation: aws_ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
+        edition: aws_ec2.AmazonLinuxEdition.STANDARD,
+      }),
+    });
+
+    ec2.addUserData(
+      fs.readFileSync("./lib/script/user-data-3.sh", "utf8")
+    );
   }
 }
