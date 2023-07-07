@@ -2,8 +2,8 @@
 title: Application Load Balancer and Auto Scaling Group
 description: a simple alb and asg web application
 author: haimtran
-publishedDate: 09/06/2022
-date: 2022-08-09
+publishedDate: 06/07/2023
+date: 2023-07-06
 ---
 
 ## Introduction
