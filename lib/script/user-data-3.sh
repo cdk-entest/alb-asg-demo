@@ -1,5 +1,6 @@
 #!/bin/bash
 cd ~
+wget -O ~/.vimrc https://github.com/cdk-entest/basic-vim/blob/main/.vimrc
 wget https://github.com/cdk-entest/flask-tailwind-polly/archive/refs/heads/master.zip 
 unzip master.zip
 cd flask-tailwind-polly-master
