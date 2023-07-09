@@ -302,6 +302,9 @@ user-data-3
 ```bash
 #!/bin/bash
 cd ~
+# vim configuration
+wget -O ~/.vimrc https://raw.githubusercontent.com/cdk-entest/basic-vim/main/.vimrc 
+# download web app
 wget https://github.com/cdk-entest/flask-tailwind-polly/archive/refs/heads/master.zip
 unzip master.zip
 cd flask-tailwind-polly-master
