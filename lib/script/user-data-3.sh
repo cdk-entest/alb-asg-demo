@@ -7,6 +7,6 @@ cd flask-tailwind-polly-master
 python3 -m ensurepip --upgrade
 python3 -m pip install -r requirements.txt
 cd app
-export BUCKET_NAME=""
+export BUCKET_NAME="vpb-polly-demo-10072023"
 export REGION="ap-southeast-1"
 python3 -m app 
