@@ -8,12 +8,13 @@ date: 2023-07-06
 
 ## Introduction
 
+This [GitHub](https://github.com/cdk-entest/alb-asg-demo) show a simple architecture with load balancer, autoscaling group, and a webserver with userdata
+
 - Create a VPC
 - Create a application load balancer
 - Create an autoscaling group (asg) 2-2-2
 - Add userData to run a web
 - Terminate an EC2 and see (asg) launch a new EC2
-- [GitHub](https://github.com/cdk-entest/alb-asg-demo)
 
 ![Untitled Diagram drawio](https://user-images.githubusercontent.com/20411077/202885587-6bc6bd59-5a85-49e6-a1ff-808d40665def.png)
 
@@ -301,17 +302,23 @@ user-data-3
 
 ```bash
 #!/bin/bash
+# # kill -9 $(lsof -t -i:8080)
 cd ~
-# vim configuration
-wget -O ~/.vimrc https://raw.githubusercontent.com/cdk-entest/basic-vim/main/.vimrc 
+# download vim configuration
+wget -O ~/.vimrc https://raw.githubusercontent.com/cdk-entest/basic-vim/main/.vimrc
 # download web app
 wget https://github.com/cdk-entest/flask-tailwind-polly/archive/refs/heads/master.zip
 unzip master.zip
 cd flask-tailwind-polly-master
+# install pip
 python3 -m ensurepip --upgrade
+# install dependencies
 python3 -m pip install -r requirements.txt
 cd app
-export BUCKET_NAME=""
+# export bucket name for polly app
+export BUCKET_NAME="vpb-polly-demo-10072023"
+# export region for polly app
+export REGION="ap-southeast-1"
 python3 -m app
 ```
 
