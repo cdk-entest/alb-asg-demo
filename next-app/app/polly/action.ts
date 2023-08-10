@@ -75,8 +75,8 @@ const callPollyServerAction = async ({ message }: { message: string }) => {
     );
   }
 
-  // return signed url
   return url;
+  // return name;
 };
 
 export default callPollyServerAction;

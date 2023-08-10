@@ -44,16 +44,16 @@ RUN addgroup --system --gid 1001 nodejs
 RUN adduser --system --uid 1001 nextjs
 
 COPY --from=builder /app/public ./public
-RUN chown -R nextjs:nodejs ./public
+COPY --from=builder /app/next.config.js ./ 
+# RUN chown -R nextjs:nodejs ./public
 
 # Automatically leverage output traces to reduce image size
 # https://nextjs.org/docs/advanced-features/output-file-tracing
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
-COPY --from=builder /app/.env.production ./
 COPY .env.production .
 
-USER nextjs
+# USER nextjs
 
 EXPOSE 3000
 ENV PORT 3000
