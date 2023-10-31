@@ -1,3 +1,4 @@
+#!/bin/bash
 # export account id
 export ACCOUNT_ID=805614989404
 # export region 
