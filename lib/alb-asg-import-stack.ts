@@ -11,11 +11,7 @@ import * as fs from "fs";
 
 export class NetworkStack extends Stack {
   public readonly vpc: aws_ec2.Vpc;
-  constructor(
-    scope: Construct,
-    id: string,
-    props: StackProps
-  ) {
+  constructor(scope: Construct, id: string, props: StackProps) {
     super(scope, id, props);
 
     // vpc
@@ -45,54 +41,42 @@ interface WebServerProps extends StackProps {
 }
 
 export class WebServerStack extends Stack {
-  constructor(
-    scope: Construct,
-    id: string,
-    props: WebServerProps
-  ) {
+  constructor(scope: Construct, id: string, props: WebServerProps) {
     super(scope, id, props);
 
     // security group for webserver
-    const webServerSecurityGroup =
-      new aws_ec2.SecurityGroup(
-        this,
-        "WebServerSecurityGroup",
-        {
-          securityGroupName: "WebServerSecurityGroup",
-          vpc: props.vpc,
-        }
-      );
+    const webServerSecurityGroup = new aws_ec2.SecurityGroup(
+      this,
+      "WebServerSecurityGroup",
+      {
+        securityGroupName: "WebServerSecurityGroup",
+        vpc: props.vpc,
+      }
+    );
     webServerSecurityGroup.addIngressRule(
       aws_ec2.Peer.anyIpv4(),
       aws_ec2.Port.tcp(80)
     );
 
     // ec2 public ip
-    const pubEc2 = new aws_ec2.Instance(
-      this,
-      "WebServerEc2",
-      {
-        instanceName: "WebServerEc2",
-        vpc: props.vpc,
-        securityGroup: webServerSecurityGroup,
-        vpcSubnets: {
-          subnetType: aws_ec2.SubnetType.PUBLIC,
-        },
-        instanceType: aws_ec2.InstanceType.of(
-          aws_ec2.InstanceClass.T2,
-          aws_ec2.InstanceSize.SMALL
-        ),
-        machineImage: new aws_ec2.AmazonLinuxImage({
-          generation:
-            aws_ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
-          edition: aws_ec2.AmazonLinuxEdition.STANDARD,
-        }),
-      }
-    );
+    const pubEc2 = new aws_ec2.Instance(this, "WebServerEc2", {
+      instanceName: "WebServerEc2",
+      vpc: props.vpc,
+      securityGroup: webServerSecurityGroup,
+      vpcSubnets: {
+        subnetType: aws_ec2.SubnetType.PUBLIC,
+      },
+      instanceType: aws_ec2.InstanceType.of(
+        aws_ec2.InstanceClass.T2,
+        aws_ec2.InstanceSize.SMALL
+      ),
+      machineImage: new aws_ec2.AmazonLinuxImage({
+        generation: aws_ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
+        edition: aws_ec2.AmazonLinuxEdition.STANDARD,
+      }),
+    });
 
-    pubEc2.addUserData(
-      fs.readFileSync("./lib/script/user-data.sh", "utf8")
-    );
+    pubEc2.addUserData(fs.readFileSync("./lib/script/user-data-4.sh", "utf8"));
 
     // alb security group
     const albSecurityGroup = new aws_ec2.SecurityGroup(
@@ -109,21 +93,20 @@ export class WebServerStack extends Stack {
     );
 
     // application load balancer
-    const alb =
-      new aws_elasticloadbalancingv2.ApplicationLoadBalancer(
-        this,
-        "AlbDemo",
-        {
-          vpc: props.vpc,
-          loadBalancerName: "AlbDemo",
-          vpcSubnets: {
-            subnetType: aws_ec2.SubnetType.PUBLIC,
-          },
-          internetFacing: true,
-          deletionProtection: false,
-          securityGroup: albSecurityGroup,
-        }
-      );
+    const alb = new aws_elasticloadbalancingv2.ApplicationLoadBalancer(
+      this,
+      "AlbDemo",
+      {
+        vpc: props.vpc,
+        loadBalancerName: "AlbDemo",
+        vpcSubnets: {
+          subnetType: aws_ec2.SubnetType.PUBLIC,
+        },
+        internetFacing: true,
+        deletionProtection: false,
+        securityGroup: albSecurityGroup,
+      }
+    );
 
     // listener port 80 HTTP
     const listener = alb.addListener("AlbListenderPort80", {
@@ -140,9 +123,7 @@ export class WebServerStack extends Stack {
       }
     );
     asgSecurityGroup.addIngressRule(
-      aws_ec2.Peer.securityGroupId(
-        albSecurityGroup.securityGroupId
-      ),
+      aws_ec2.Peer.securityGroupId(albSecurityGroup.securityGroupId),
       aws_ec2.Port.tcp(80)
     );
 
@@ -157,8 +138,7 @@ export class WebServerStack extends Stack {
           aws_ec2.InstanceSize.SMALL
         ),
         machineImage: new aws_ec2.AmazonLinuxImage({
-          generation:
-            aws_ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
+          generation: aws_ec2.AmazonLinuxGeneration.AMAZON_LINUX_2,
           edition: aws_ec2.AmazonLinuxEdition.STANDARD,
         }),
         minCapacity: 2,
@@ -170,9 +150,7 @@ export class WebServerStack extends Stack {
       }
     );
 
-    asg.addUserData(
-      fs.readFileSync("./lib/script/user-data.sh", "utf8")
-    );
+    asg.addUserData(fs.readFileSync("./lib/script/user-data.sh", "utf8"));
 
     // integerate with alb
     listener.addTargets("Target", {
@@ -191,6 +169,6 @@ export class WebServerStack extends Stack {
     // auto scaling strategies
     asg.scaleOnCpuUtilization("KeepSparseCPU", {
       targetUtilizationPercent: 50,
-    })
+    });
   }
 }

@@ -12,7 +12,7 @@ const DEPLOY_MODE: string = "newnetwork";
 // region
 const REGION: string = "ap-southeast-1";
 // cidr block
-const CIDR = "10.0.0.0/16";
+const CIDR = "172.16.0.0/16";
 
 const app = new cdk.App();
 

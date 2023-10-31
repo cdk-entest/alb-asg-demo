@@ -115,6 +115,21 @@ export class ApplicationStack extends Stack {
       })
     );
 
+    role.addToPolicy(
+      new aws_iam.PolicyStatement({
+        effect: Effect.ALLOW,
+        resources: ["*"],
+        actions: ["ecr:*"],
+      })
+    );
+
+    // allow push and pull ecr
+    role.addManagedPolicy(
+      aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
+        "AmazonEC2ContainerRegistryReadOnly"
+      )
+    );
+
     const albSecurityGroup = new aws_ec2.SecurityGroup(this, "SGForWeb", {
       securityGroupName: "SGForWeb",
       vpc: vpc,
@@ -218,7 +233,7 @@ export class ApplicationStack extends Stack {
       adjustmentType: aws_autoscaling.AdjustmentType.CHANGE_IN_CAPACITY,
     });
 
-    asg.addUserData(fs.readFileSync("./lib/script/user-data-3.sh", "utf8"));
+    asg.addUserData(fs.readFileSync("./lib/script/user-data-4.sh", "utf8"));
 
     listener.addTargets("Target", {
       port: 80,
@@ -284,6 +299,22 @@ export class WebServerStack extends Stack {
       })
     );
 
+    // allow call ecr service
+    role.addToPolicy(
+      new aws_iam.PolicyStatement({
+        effect: Effect.ALLOW,
+        resources: ["*"],
+        actions: ["ecr:*"],
+      })
+    );
+
+    // allow pull push ecr
+    role.addManagedPolicy(
+      aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
+        "AmazonEC2ContainerRegistryReadOnly"
+      )
+    );
+
     // ec2 for web server
     const ec2 = new aws_ec2.Instance(this, "WebServerPollyDemo", {
       instanceName: "WebServerPollyDemo",
@@ -308,6 +339,6 @@ export class WebServerStack extends Stack {
       }),
     });
 
-    ec2.addUserData(fs.readFileSync("./lib/script/user-data-3.sh", "utf8"));
+    ec2.addUserData(fs.readFileSync("./lib/script/user-data-5.sh", "utf8"));
   }
 }
