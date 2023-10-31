@@ -322,6 +322,77 @@ export REGION="ap-southeast-1"
 python3 -m app
 ```
 
+## Troubleshooting
+
+Run container locall and test
+
+```bash
+sudo docker run -d -p 3000:3000 next-diffusion-app:latest
+```
+
+Kill all containers are running
+
+```bash
+docker kill $(docker ps -q)
+```
+
+Find process runing on port and kill
+
+```bash
+kill -9 $(lsof -t -i:8080)
+```
+
+Or use this command
+
+```bash
+netstat -nlp|grep 9000
+```
+
+Exec into a docker container running
+
+```bash
+docker ps
+docker exec -it container-name /bin/sh
+```
+
+Dockerfile node16
+
+```ts
+FROM node:16-alpine AS deps
+# FROM public.ecr.aws/docker/library/node:16-alpine
+
+RUN apk add --no-cache libc6-compat
+WORKDIR /app
+COPY package.json yarn.lock* package-lock.json* pnpm-lock.yaml* ./
+RUN \
+  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
+  elif [ -f package-lock.json ]; then npm ci; \
+  elif [ -f pnpm-lock.yaml ]; then yarn global add pnpm && pnpm i --frozen-lockfile; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
+
+FROM node:16-alpine AS builder
+WORKDIR /app
+COPY --from=deps /app/node_modules ./node_modules
+COPY . .
+RUN yarn build
+
+FROM node:16-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV production
+RUN addgroup --system --gid 1001 nodejs
+RUN adduser --system --uid 1001 nextjs
+COPY --from=builder /app/public ./public
+COPY --from=builder --chown=nextjs:nodejs /app/.next/standalone ./
+COPY --from=builder --chown=nextjs:nodejs /app/.next/static ./.next/static
+
+USER nextjs
+EXPOSE 3000
+ENV PORT 3000
+CMD ["node", "server.js"]
+
+```
+
 ## Reference
 
 - [cooldown and warmup time](https://docs.aws.amazon.com/autoscaling/ec2/userguide/consolidated-view-of-warm-up-and-cooldown-settings.html)
