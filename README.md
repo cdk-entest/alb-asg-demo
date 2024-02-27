@@ -292,7 +292,7 @@ docker run -d -p 80:3000 $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/next-bedrock:
 # sudo docker run -d -p 3000:3000 $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/next-bedrock:latest
 ```
 
-<details>
+</details>
 
 ## HTTPS
 
