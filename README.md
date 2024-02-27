@@ -264,7 +264,7 @@ role.addManagedPolicy(
 And user-data-bedrock here
 
 <details>
-<summary>user-data-bedorkc.sh</summary>
+<summary>user-data-bedrock.sh</summary>
 
 ```txt
 #!/bin/bash
