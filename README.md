@@ -182,6 +182,78 @@ listener.addTargets("Target", {
 });
 ```
 
+**HTTPS**
+
+- create ACM certificate
+- add listener https on alb
+- create a record on route53
+
+```ts
+const listenerHTTPS = alb.addListener("AlbListenerHTTPS", {
+  port: 443,
+  open: true,
+  protocol: aws_elasticloadbalancingv2.ApplicationProtocol.HTTPS,
+  certificates: [
+    ListenerCertificate.fromArn(props.acmCertArn ? props.acmCertArn : ""),
+  ],
+});
+
+listenerHTTPS.addTargets("TargetHTTPS", {
+  port: 80,
+  targets: [asg],
+  healthCheck: {
+    path: "/",
+    port: "80",
+    protocol: aws_elasticloadbalancingv2.Protocol.HTTP,
+    healthyThresholdCount: 5,
+    unhealthyThresholdCount: 2,
+    timeout: Duration.seconds(10),
+  },
+});
+```
+
+Script to update route53 record
+
+```py
+
+import os
+import boto3
+
+# change to entest account
+os.system("set-aws-account.sh entest ap-southeast-1")
+
+# route53 client
+client = boto3.client('route53')
+
+# update load balancer dns
+response = client.change_resource_record_sets(
+    ChangeBatch={
+        'Changes': [
+            {
+                'Action': 'UPSERT',
+                'ResourceRecordSet': {
+                    'Name': 'image-vng.entest.io',
+                    'ResourceRecords': [
+                        {
+                            'Value': $ALB_ENDPOINT,
+                        },
+                    ],
+                    'TTL': 300,
+                    'Type': 'CNAME',
+                },
+            },
+        ],
+        'Comment': 'Web Server',
+    },
+    HostedZoneId=$HOSTED_ZONE_ID,
+)
+
+print(response)
+
+# change back to demo account
+os.system("set-aws-account.sh demo us-east-1")
+```
+
 ## Scaling Policy
 
 target tracking - on cpu usage
@@ -293,78 +365,6 @@ docker run -d -p 80:3000 $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/next-bedrock:
 ```
 
 </details>
-
-## HTTPS
-
-- create ACM certificate
-- add listener https on alb
-- create a record on route53
-
-```ts
-const listenerHTTPS = alb.addListener("AlbListenerHTTPS", {
-  port: 443,
-  open: true,
-  protocol: aws_elasticloadbalancingv2.ApplicationProtocol.HTTPS,
-  certificates: [
-    ListenerCertificate.fromArn(props.acmCertArn ? props.acmCertArn : ""),
-  ],
-});
-
-listenerHTTPS.addTargets("TargetHTTPS", {
-  port: 80,
-  targets: [asg],
-  healthCheck: {
-    path: "/",
-    port: "80",
-    protocol: aws_elasticloadbalancingv2.Protocol.HTTP,
-    healthyThresholdCount: 5,
-    unhealthyThresholdCount: 2,
-    timeout: Duration.seconds(10),
-  },
-});
-```
-
-Script to update route53 record
-
-```py
-
-import os
-import boto3
-
-# change to entest account
-os.system("set-aws-account.sh entest ap-southeast-1")
-
-# route53 client
-client = boto3.client('route53')
-
-# update load balancer dns
-response = client.change_resource_record_sets(
-    ChangeBatch={
-        'Changes': [
-            {
-                'Action': 'UPSERT',
-                'ResourceRecordSet': {
-                    'Name': 'image-vng.entest.io',
-                    'ResourceRecords': [
-                        {
-                            'Value': $ALB_ENDPOINT,
-                        },
-                    ],
-                    'TTL': 300,
-                    'Type': 'CNAME',
-                },
-            },
-        ],
-        'Comment': 'Web Server',
-    },
-    HostedZoneId=$HOSTED_ZONE_ID,
-)
-
-print(response)
-
-# change back to demo account
-os.system("set-aws-account.sh demo us-east-1")
-```
 
 ## Load Test
 
