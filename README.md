@@ -324,6 +324,48 @@ listenerHTTPS.addTargets("TargetHTTPS", {
 });
 ```
 
+Script to update route53 record
+
+```py
+
+import os
+import boto3
+
+# change to entest account
+os.system("set-aws-account.sh entest ap-southeast-1")
+
+# route53 client
+client = boto3.client('route53')
+
+# update load balancer dns
+response = client.change_resource_record_sets(
+    ChangeBatch={
+        'Changes': [
+            {
+                'Action': 'UPSERT',
+                'ResourceRecordSet': {
+                    'Name': 'image-vng.entest.io',
+                    'ResourceRecords': [
+                        {
+                            'Value': $ALB_ENDPOINT,
+                        },
+                    ],
+                    'TTL': 300,
+                    'Type': 'CNAME',
+                },
+            },
+        ],
+        'Comment': 'Web Server',
+    },
+    HostedZoneId=$HOSTED_ZONE_ID,
+)
+
+print(response)
+
+# change back to demo account
+os.system("set-aws-account.sh demo us-east-1")
+```
+
 ## Load Test
 
 Option 1. manually terminal EC2 instances
@@ -487,3 +529,7 @@ CMD ["node", "server.js"]
 - [target group](https://docs.aws.amazon.com/elasticloadbalancing/latest/application/load-balancer-target-groups.html)
 
 - [weighted target group](https://aws.amazon.com/blogs/aws/new-application-load-balancer-simplifies-deployment-with-weighted-target-groups/)
+
+```
+
+```
