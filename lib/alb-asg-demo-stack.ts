@@ -8,6 +8,7 @@ import {
   Duration,
   aws_cloudwatch,
 } from "aws-cdk-lib";
+import { ListenerCertificate } from "aws-cdk-lib/aws-elasticloadbalancingv2";
 import { Effect } from "aws-cdk-lib/aws-iam";
 import { Construct } from "constructs";
 import * as fs from "fs";
@@ -77,6 +78,7 @@ export class VpcStack extends Stack {
 
 interface ApplicationProps extends StackProps {
   vpc: aws_ec2.IVpc;
+  acmCertArn?: string;
 }
 
 export class ApplicationStack extends Stack {
@@ -123,6 +125,21 @@ export class ApplicationStack extends Stack {
       })
     );
 
+    // bedrock permission
+    role.addToPolicy(
+      new aws_iam.PolicyStatement({
+        effect: Effect.ALLOW,
+        resources: [
+          "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-v2",
+          "arn:aws:bedrock:us-east-1::foundation-model/stability.stable-diffusion-xl-v1",
+        ],
+        actions: [
+          "bedrock:InvokeModel",
+          "bedrock:InvokeModelWithResponseStream",
+        ],
+      })
+    );
+
     // allow push and pull ecr
     role.addManagedPolicy(
       aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
@@ -155,10 +172,6 @@ export class ApplicationStack extends Stack {
         securityGroup: albSecurityGroup,
       }
     );
-
-    const listener = alb.addListener("AlbListener", {
-      port: 80,
-    });
 
     const asgSecurityGroup = new aws_ec2.SecurityGroup(this, "SGForASG", {
       securityGroupName: "SGForASG",
@@ -233,9 +246,37 @@ export class ApplicationStack extends Stack {
       adjustmentType: aws_autoscaling.AdjustmentType.CHANGE_IN_CAPACITY,
     });
 
-    asg.addUserData(fs.readFileSync("./lib/script/user-data-4.sh", "utf8"));
+    asg.addUserData(
+      fs.readFileSync("./lib/script/user-data-bedrock.sh", "utf8")
+    );
+
+    const listener = alb.addListener("AlbListener", {
+      port: 80,
+    });
 
     listener.addTargets("Target", {
+      port: 80,
+      targets: [asg],
+      healthCheck: {
+        path: "/",
+        port: "80",
+        protocol: aws_elasticloadbalancingv2.Protocol.HTTP,
+        healthyThresholdCount: 5,
+        unhealthyThresholdCount: 2,
+        timeout: Duration.seconds(10),
+      },
+    });
+
+    const listenerHTTPS = alb.addListener("AlbListenerHTTPS", {
+      port: 443,
+      open: true,
+      protocol: aws_elasticloadbalancingv2.ApplicationProtocol.HTTPS,
+      certificates: [
+        ListenerCertificate.fromArn(props.acmCertArn ? props.acmCertArn : ""),
+      ],
+    });
+
+    listenerHTTPS.addTargets("TargetHTTPS", {
       port: 80,
       targets: [asg],
       healthCheck: {

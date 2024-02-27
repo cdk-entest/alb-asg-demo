@@ -6,6 +6,7 @@ import {
   ImportedVpcStack,
   WebServerStack,
 } from "../lib/alb-asg-demo-stack";
+import { config } from "../config";
 
 // deployment mode
 const DEPLOY_MODE: string = "newnetwork";
@@ -47,6 +48,7 @@ if (DEPLOY_MODE == "existedVpc") {
   // application stack
   const alb = new ApplicationStack(app, "ApplicationStack", {
     vpc: network.vpc,
+    acmCertArn: config.ACM_CERT_ARN,
     env: {
       region: REGION,
       account: process.env.CDK_DEFAULT_ACCOUNT,

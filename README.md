@@ -237,6 +237,93 @@ asg.scaleOnMetric("MyMetric", {
 });
 ```
 
+## Bedrock
+
+Let update the instance role so it can call Bedorck
+
+```ts
+role.addToPolicy(
+  new aws_iam.PolicyStatement({
+    effect: Effect.ALLOW,
+    resources: [
+      "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-v2",
+      "arn:aws:bedrock:us-east-1::foundation-model/stability.stable-diffusion-xl-v1",
+    ],
+    actions: ["bedrock:InvokeModel", "bedrock:InvokeModelWithResponseStream"],
+  })
+);
+
+// allow push and pull ecr
+role.addManagedPolicy(
+  aws_iam.ManagedPolicy.fromAwsManagedPolicyName(
+    "AmazonEC2ContainerRegistryReadOnly"
+  )
+);
+```
+
+And user-data-bedrock here
+
+<details>
+<summary>user-data-bedorkc.sh</summary>
+
+```txt
+#!/bin/bash
+# export account id
+export ACCOUNT_ID=111222333444
+# export region
+export REGION=us-east-1
+# install docker
+yes | dnf install docker
+# start docker
+systemctl start docker
+# kill running containers
+# docker kill $(docker ps -q)
+# delete all existing images
+# yes | docker system prune -a
+# auth ecr
+aws ecr get-login-password --region $REGION | docker login --username AWS --password-stdin $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com
+# pull and run
+docker pull $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/next-bedrock:latest
+# run docker image
+docker run -d -p 80:3000 $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/next-bedrock:latest
+# debug
+# sudo docker exec -it sad_hellman /bin/bash
+# sudo docker exec -it sad_hellman /bin/sh
+# sudo docker run -d -p 3000:3000 $ACCOUNT_ID.dkr.ecr.$REGION.amazonaws.com/next-bedrock:latest
+```
+
+<details>
+
+## HTTPS
+
+- create ACM certificate
+- add listener https on alb
+- create a record on route53
+
+```ts
+const listenerHTTPS = alb.addListener("AlbListenerHTTPS", {
+  port: 443,
+  open: true,
+  protocol: aws_elasticloadbalancingv2.ApplicationProtocol.HTTPS,
+  certificates: [
+    ListenerCertificate.fromArn(props.acmCertArn ? props.acmCertArn : ""),
+  ],
+});
+
+listenerHTTPS.addTargets("TargetHTTPS", {
+  port: 80,
+  targets: [asg],
+  healthCheck: {
+    path: "/",
+    port: "80",
+    protocol: aws_elasticloadbalancingv2.Protocol.HTTP,
+    healthyThresholdCount: 5,
+    unhealthyThresholdCount: 2,
+    timeout: Duration.seconds(10),
+  },
+});
+```
+
 ## Load Test
 
 Option 1. manually terminal EC2 instances
